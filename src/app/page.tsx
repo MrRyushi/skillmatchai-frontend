@@ -1,103 +1,138 @@
+'use client';
 import Image from "next/image";
+import { useEffect } from "react";
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [file, setFile] = useState<File | null>(null);
+  const [jobDesc, setJobDesc] = useState("");
+  const [matchScore, setMatchScore] = useState<number | null>(null);
+  const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
+  const [missingSkills, setMissingSkills] = useState<string[]>([]);
+  const [recommendations, setRecommendations] = useState<string[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!file) {
+      alert("Please upload a resume!");
+      return;
+    }
+
+    if (!jobDesc) {
+      alert("Please enter a job description!");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("resume", file);
+    formData.append("job_description", jobDesc);
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/match", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+  
+      setMatchScore(data.match_score);
+      setMatchedSkills(data.matched_skills);
+      setMissingSkills(data.missing_skills);
+      setRecommendations(data.recommendations);
+    } catch (err) {
+      console.error("Error sending data:", err);
+    }
+
+  };
+
+  useEffect(() => {
+  console.log("Updated Missing Skills:", missingSkills);
+}, [missingSkills]);
+
+  useEffect(() => {
+    console.log("Updated Matched Skills:", matchedSkills);
+  }, [matchedSkills]);
+
+
+  return (
+    <div className="flex min-h-screen w-screen flex-col items-center justify-center p-10 sm:p-24 poppins space-y-10">
+      <div>
+        <h1 className="text-4xl sm:text-5xl font-bold text-center">Welcome to SkillMatch AI 💡</h1>
+      </div>
+      <form className="flex flex-col gap-3 justify-center items-center w-full sm:w-11/12 md:5/6" onSubmit={handleSubmit}>
+        <div className="w-full space-y-2">
+          <Label htmlFor="file">Upload your Resume</Label>
+          <Input id="file" type="file" className="hover:underline text-sm" onChange={(e) => setFile(e.target.files?.[0] || null)}/>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="w-full space-y-2">
+          <Label htmlFor="job_description">Paste your Job Description</Label>
+          <Textarea placeholder="Paste your Job Description here." onChange={(e) => setJobDesc(e.target.value)}/>
+        </div>
+
+        <div className="flex items-end">
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Match Skills
+          </button>
+        </div>
+      </form>
+
+      <div className="w-full sm:w-11/12 lg:w-1/2">
+      {matchScore !== null && (
+        <div>
+          <Alert variant="default">
+          <AlertTitle className="font-bold">Match Score</AlertTitle>
+          <AlertDescription>
+            {matchScore} / 100
+          </AlertDescription>
+        </Alert>
+        </div>
+      )}
+
+  
+      {matchedSkills !== null && (
+        <div className="w-full">
+          <Alert variant="default">
+          <AlertTitle className="font-bold">Matched Skills</AlertTitle>
+          <AlertDescription>
+            {matchedSkills.map((skill, index) => (
+              <div key={index}>- {skill}</div>  
+            ))}
+          </AlertDescription>
+        </Alert>
+        </div>
+      )}
+
+      {missingSkills && missingSkills.length > 0 && (<div className="w-full h-full">
+        <Alert variant="destructive">
+          <AlertTitle className="font-bold">Missing Skills!</AlertTitle>
+          <AlertDescription>
+            {missingSkills.map((skill, index) => (
+              <div key={index}>- {skill}</div>
+            ))}
+          </AlertDescription>
+        </Alert>
+      </div>)}
+      {recommendations !== null && (
+        <div>
+          <Alert variant="default">
+          <AlertTitle className="font-bold">Recommendations</AlertTitle>
+          <AlertDescription>
+            {recommendations.map((rec, index) => (
+              <div key={index}>- {rec}</div>  
+            ))}
+          </AlertDescription>
+        </Alert>
+        </div>
+      )}
+      </div>
     </div>
   );
 }
