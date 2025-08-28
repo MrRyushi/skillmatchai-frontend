@@ -6,18 +6,27 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Progress } from "@/components/ui/progress"
+
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [jobDesc, setJobDesc] = useState("");
+
+  // Output states
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
+  // For progress bar
+  const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState(0) 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setLoading(true)
+    setProgress(20)
     if (!file) {
       alert("Please upload a resume!");
       return;
@@ -31,21 +40,23 @@ export default function Home() {
     const formData = new FormData();
     formData.append("resume", file);
     formData.append("job_description", jobDesc);
-
+    setProgress(60)
     try {
       const res = await fetch("http://127.0.0.1:8000/match", {
         method: "POST",
         body: formData,
       });
-
       const data = await res.json();
   
       setMatchScore(data.match_score);
       setMatchedSkills(data.matched_skills);
       setMissingSkills(data.missing_skills);
       setRecommendations(data.recommendations);
+      setProgress(100)
     } catch (err) {
       console.error("Error sending data:", err);
+    } finally {
+      setLoading(false)
     }
 
   };
@@ -64,7 +75,7 @@ export default function Home() {
       <div>
         <h1 className="text-4xl sm:text-5xl font-bold text-center">Welcome to SkillMatch AI 💡</h1>
       </div>
-      <form className="flex flex-col gap-3 justify-center items-center w-full sm:w-11/12 md:5/6" onSubmit={handleSubmit}>
+      <form className="flex flex-col gap-3 justify-center items-center w-full sm:w-11/12 md:5/6 lg:w-1/2 xl:w-2/5s 2xl:w-1/3" onSubmit={handleSubmit}>
         <div className="w-full space-y-2">
           <Label htmlFor="file">Upload your Resume</Label>
           <Input id="file" type="file" className="hover:underline text-sm" onChange={(e) => setFile(e.target.files?.[0] || null)}/>
@@ -84,7 +95,16 @@ export default function Home() {
         </div>
       </form>
 
+      {loading && (
+        <div className="my-4">
+          <Progress value={progress} />
+          <p className="text-sm text-muted-foreground mt-2">Analyzing your resume...</p>
+        </div>
+      )}
+
+      {!loading && (
       <div className="w-full sm:w-11/12 lg:w-1/2">
+  
       {matchScore !== null && (
         <div>
           <Alert variant="default">
@@ -97,7 +117,7 @@ export default function Home() {
       )}
 
   
-      {matchedSkills !== null && (
+      {matchedSkills && matchedSkills.length > 0 && (
         <div className="w-full">
           <Alert variant="default">
           <AlertTitle className="font-bold">Matched Skills</AlertTitle>
@@ -120,7 +140,7 @@ export default function Home() {
           </AlertDescription>
         </Alert>
       </div>)}
-      {recommendations !== null && (
+      {recommendations && recommendations.length > 0 && (
         <div>
           <Alert variant="default">
           <AlertTitle className="font-bold">Recommendations</AlertTitle>
@@ -132,7 +152,7 @@ export default function Home() {
         </Alert>
         </div>
       )}
-      </div>
+      </div> )}
     </div>
   );
 }
