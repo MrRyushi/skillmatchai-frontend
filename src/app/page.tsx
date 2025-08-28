@@ -42,7 +42,7 @@ export default function Home() {
     formData.append("job_description", jobDesc);
     setProgress(60)
     try {
-      const res = await fetch("http://127.0.0.1:8000/match", {
+      const res = await fetch("https://skillmatchai-backend.onrender.com/match", { // http://127.0.0.1:8000/match
         method: "POST",
         body: formData,
       });
